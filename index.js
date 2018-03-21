@@ -29,13 +29,16 @@ function TuyaColorLight(log, config) {
   this.colorTempMax = 500;
   this.dps = {};
   this.debugPrefix = config.debugPrefix || '~~~~~~~~~~~~~~~~~~~~~~~~~~ TUYA LIGHT: ';
-  this.debug = config.debug || false;
+  this.debugPrefix += this.name + '   ';
 
+  this.log.prefix = 'Homebridge Tuya Color Light';
+
+  this.debug = config.debug || false;
 
   // Setup Tuya Color Light
   if (config.ip != undefined) {
 
-    this.debugger(this.debugPrefix + ' Tuya Color Light ' + this.name + ' Ip is defined as ' + config.ip);
+    this.debugger('Tuya Color Light ' + this.name + ' Ip is defined as ' + config.ip);
 
     this.tuyaColorLight = new tuya({type: 'outlet', ip: config.ip, id: config.devId, key: config.localKey});
 
@@ -49,8 +52,14 @@ function TuyaColorLight(log, config) {
 
   }
 
+  this.services = this.getServices();
+
   // Pull an update from Tuya
-  this.updateLight();
+  this._getLightStatus(function(error, result) {
+    this.debugger(' LIGHT ON STATUS IS: ' + result);
+    this.services[1].value = result;
+    // Extend this some more to get the rest of the data collected to the proper state.
+  }.bind(this));
 
   /* Device Function Points from Tuya lights... what a party to figure out.
   dps:
@@ -74,12 +83,10 @@ function TuyaColorLight(log, config) {
 TuyaColorLight.prototype._getLightStatus = function(callback) {
   this.tuyaColorLight.get({schema: true}).then(status => {
 
-    this.debugger(this.debugPrefix + ' BEGIN TUYA COLOR LIGHT STATUS ' + this.debugPrefix);
-    this.debugger(this.debugPrefix + ' Getting Tuya Color Light device status for ' + this.name);
+    this.debugger('BEGIN TUYA COLOR LIGHT STATUS ' + this.debugPrefix);
+    this.debugger('Getting Tuya Color Light device status for ' + this.name);
 
-    if(status.dps['1'] !== undefined) {
-      this.onService.value = status.dps['1'];
-    }
+    this.powerState = status.dps['1'];
 
     if(status.dps['2'] !== undefined) {
       this.colorMode = status.dps['2']; // colour or white
@@ -123,10 +130,8 @@ TuyaColorLight.prototype._getLightStatus = function(callback) {
       }
 
       if(!this.debug) {
-        this.log.info(this.debugPrefix + ' Received update for Tuya Color LED Light: ' + this.name);
+        this.log.info('Received update for Tuya Color LED Light: ' + this.name);
       } else {
-
-
         this.debugger(this.debugPrefix + " dps[1] : " + status.dps['1']);
         this.debugger(this.debugPrefix + " dps[2] : " + status.dps['2']);
         this.debugger(this.debugPrefix + " dps[3] : " + status.dps['3']);
@@ -137,37 +142,37 @@ TuyaColorLight.prototype._getLightStatus = function(callback) {
         this.debugger(this.debugPrefix + " dps[8] : " + status.dps['8']);
         this.debugger(this.debugPrefix + " dps[9] : " + status.dps['9']);
 
-        this.debugger(this.debugPrefix + ' Factored Results ' + this.name + ' device properties...');
-        this.debugger(this.debugPrefix + ' TUYA Light [1] Power: ' + this.onService.value);
-        this.debugger(this.debugPrefix + ' TUYA Light [2] Color Mode: ' + this.colorMode);
-        this.debugger(this.debugPrefix + ' TUYA Light [3] BRIGHTNESS: ' + this.brightness + '%');
-        this.debugger(this.debugPrefix + ' TUYA Light [4] TEMPERATURE: ' + this.colorTemperature);
-        this.debugger(this.debugPrefix + ' TUYA Light [5] (H)UE: ' + this.hue);
-        this.debugger(this.debugPrefix + ' TUYA Light [5] (S)ATURATION: ' + this.saturation + '%');
-        this.debugger(this.debugPrefix + ' TUYA Light [5] (L)ightness: ' + this.lightness + '%');
-        this.debugger(this.debugPrefix + ' TUYA Light DEVICE COLOR 1: ' + status.dps['5'].substring(0,6));
-        this.debugger(this.debugPrefix + ' TUYA Light Color 1 Hex to HSL: ' + converted);
-        this.debugger(this.debugPrefix + ' TUYA Light Color 1 HSL to HEX: ' + hexColor1);
-        this.debugger(this.debugPrefix + ' TUYA Light DEVICE COLOR 2: ' + status.dps['5'].substring(6,12));
-        this.debugger(this.debugPrefix + ' TUYA Light Color 2 Hex to HSL: ' + converted2);
-        this.debugger(this.debugPrefix + ' TUYA Light Color 2 HSL to HEX: ' + hexColor2);
-        this.debugger(this.debugPrefix + ' TUYA Light Color Alpha Hex Val: ' + status.dps['5'].substring(12,14));
-        this.debugger(this.debugPrefix + ' TUYA Light Color Alpha Hex Val: ' + status.dps['5'].substring(12,14));
-        this.debugger(this.debugPrefix + ' TUYA Light Color ALPHAHEX: ' + alphaHex);
+        this.debugger('Factored Results ' + this.name + ' device properties...');
+        this.debugger('TUYA Light [1] Power: ' + this.onService.value);
+        this.debugger('TUYA Light [2] Color Mode: ' + this.colorMode);
+        this.debugger('TUYA Light [3] BRIGHTNESS: ' + this.brightness + '%');
+        this.debugger('TUYA Light [4] TEMPERATURE: ' + this.colorTemperature);
+        this.debugger('TUYA Light [5] (H)UE: ' + this.hue);
+        this.debugger('TUYA Light [5] (S)ATURATION: ' + this.saturation + '%');
+        this.debugger('TUYA Light [5] (L)ightness: ' + this.lightness + '%');
+        this.debugger('TUYA Light DEVICE COLOR 1: ' + status.dps['5'].substring(0,6));
+        this.debugger('TUYA Light Color 1 Hex to HSL: ' + converted);
+        this.debugger('TUYA Light Color 1 HSL to HEX: ' + hexColor1);
+        this.debugger('TUYA Light DEVICE COLOR 2: ' + status.dps['5'].substring(6,12));
+        this.debugger('TUYA Light Color 2 Hex to HSL: ' + converted2);
+        this.debugger('TUYA Light Color 2 HSL to HEX: ' + hexColor2);
+        this.debugger('TUYA Light Color Alpha Hex Val: ' + status.dps['5'].substring(12,14));
+        this.debugger('TUYA Light Color Alpha Hex Val: ' + status.dps['5'].substring(12,14));
+        this.debugger('TUYA Light Color ALPHAHEX: ' + alphaHex);
       }
 
       // this.brightness = status.dps['3'] / 255 * 100;
     }
 
-    this.debugger(this.debugPrefix + ' END TUYA COLOR LIGHT STATUS ' + this.debugPrefix);
+    this.debugger('END TUYA COLOR LIGHT STATUS ' + this.debugPrefix);
 
-    return callback(this);
+    return callback(null, this.powerState);
 
   }).catch(error => {
-    this.debugger(this.debugPrefix + ' BEGIN TUYA GET COLOR LIGHT STATUS ERROR ' + this.debugPrefix);
-    this.debugger(this.debugPrefix + ' Got Tuya Color Light device ERROR for ' + this.name);
+    this.debugger('BEGIN TUYA GET COLOR LIGHT STATUS ERROR ' + this.debugPrefix);
+    this.debugger('Got Tuya Color Light device ERROR for ' + this.name);
     this.debugger(this.debugPrefix + error);
-    this.debugger(this.debugPrefix + ' END TUYA GET COLOR POWER STATUS ERROR ' + this.debugPrefix);
+    this.debugger('END TUYA GET COLOR POWER STATUS ERROR ' + this.debugPrefix);
     if(!this.debug) {
       this.log.warn(this.debugPrefix + error);
     }
@@ -176,10 +181,6 @@ TuyaColorLight.prototype._getLightStatus = function(callback) {
 }
 
 
-
-TuyaColorLight.prototype.updateLight = function() {
-  this._getLightStatus(function(error, results) {}.bind(this));
-};
 
 
 TuyaColorLight.prototype.setToCurrentColor = function() {
@@ -223,35 +224,35 @@ TuyaColorLight.prototype.setToCurrentColor = function() {
 
   this.tuyaColorLight.setDps({'id': this.devId, 'dps' : dpsTmp}).then(() => {
     if(this.debug) {
-      this.debugger(this.debugPrefix + ' BEGIN TUYA SET COLOR LIGHT COLOR ' + this.debugPrefix);
-      this.debugger(this.debugPrefix + ' Color 1 R ORIGINAL ' + rgbColor1[0] + ' R at ' + this.brightness + '% Brightness: ' + color1R);
-      this.debugger(this.debugPrefix + ' Color 1 G ORIGINAL ' + rgbColor1[1] + ' G at ' + this.brightness + '% Brightness: ' + color1G);
-      this.debugger(this.debugPrefix + ' Color 1 B ORIGINAL ' + rgbColor1[1] + ' B at ' + this.brightness + '% Brightness: ' + color1B);
-      this.debugger(this.debugPrefix + ' Color 1 Original Hex: ' + hexColor1 + ' at ' + this.brightness + '% Brightness: ' + hexColor1Brightened);
-      this.debugger(this.debugPrefix + ' Color 2 R ORIGINAL ' + rgbColor2[0] + ' R at ' + this.brightness + '% Brightness: ' + color2R);
-      this.debugger(this.debugPrefix + ' Color 2 G ORIGINAL ' + rgbColor2[1] + ' G at ' + this.brightness + '% Brightness: ' + color2G);
-      this.debugger(this.debugPrefix + ' Color 2 B ORIGINAL ' + rgbColor2[1] + ' B at ' + this.brightness + '% Brightness: ' + color2B);
-      this.debugger(this.debugPrefix + ' Color 2 Original Hex: ' + hexColor2 + ' at ' + this.brightness + '% Brightness: ' + hexColor2Brightened);
-      this.debugger(this.debugPrefix + ' ww ' + ww);
-      this.debugger(this.debugPrefix + ' SETTING ' + this.name + " device to ");
-      this.debugger(this.debugPrefix + ' SETTING LIGHT MODE: ' + dpsTmp['2']);
-      this.debugger(this.debugPrefix + ' SETTING BRIGHTNESS: ' + this.brightness + '% or ' + dpsTmp['3'] + ' of 255');
-      this.debugger(this.debugPrefix + ' SETTING COLOR TEMPERATURE: ' + this._convertColorTemperature(this.colorTemperature) + ' or ' + dpsTmp['4'] + ' of 255');
-      this.debugger(this.debugPrefix + ' HEX COLOR 1: ' + hexColor1);
-      this.debugger(this.debugPrefix + ' HEX COLOR 1 Brightness: ' + hexColor1Brightened);
-      this.debugger(this.debugPrefix + ' HEX COLOR 2: ' + hexColor2);
-      this.debugger(this.debugPrefix + ' HEX COLOR 2 Brightness: ' + hexColor2);
-      this.debugger(this.debugPrefix + ' NEW HEX AlphaHex: ' + alphaBrightness);
-      this.debugger(this.debugPrefix + ' SENT DPS VALUES: ' + dpsTmp.toString());
-      this.debugger(this.debugPrefix + ' END TUYA SET COLOR LIGHT COLOR ' + this.debugPrefix);
+      this.debugger('BEGIN TUYA SET COLOR LIGHT COLOR ' + this.debugPrefix);
+      this.debugger('Color 1 R ORIGINAL ' + rgbColor1[0] + ' R at ' + this.brightness + '% Brightness: ' + color1R);
+      this.debugger('Color 1 G ORIGINAL ' + rgbColor1[1] + ' G at ' + this.brightness + '% Brightness: ' + color1G);
+      this.debugger('Color 1 B ORIGINAL ' + rgbColor1[1] + ' B at ' + this.brightness + '% Brightness: ' + color1B);
+      this.debugger('Color 1 Original Hex: ' + hexColor1 + ' at ' + this.brightness + '% Brightness: ' + hexColor1Brightened);
+      this.debugger('Color 2 R ORIGINAL ' + rgbColor2[0] + ' R at ' + this.brightness + '% Brightness: ' + color2R);
+      this.debugger('Color 2 G ORIGINAL ' + rgbColor2[1] + ' G at ' + this.brightness + '% Brightness: ' + color2G);
+      this.debugger('Color 2 B ORIGINAL ' + rgbColor2[1] + ' B at ' + this.brightness + '% Brightness: ' + color2B);
+      this.debugger('Color 2 Original Hex: ' + hexColor2 + ' at ' + this.brightness + '% Brightness: ' + hexColor2Brightened);
+      this.debugger('ww ' + ww);
+      this.debugger('SETTING ' + this.name + " device to ");
+      this.debugger('SETTING LIGHT MODE: ' + dpsTmp['2']);
+      this.debugger('SETTING BRIGHTNESS: ' + this.brightness + '% or ' + dpsTmp['3'] + ' of 255');
+      this.debugger('SETTING COLOR TEMPERATURE: ' + this._convertColorTemperature(this.colorTemperature) + ' or ' + dpsTmp['4'] + ' of 255');
+      this.debugger('HEX COLOR 1: ' + hexColor1);
+      this.debugger('HEX COLOR 1 Brightness: ' + hexColor1Brightened);
+      this.debugger('HEX COLOR 2: ' + hexColor2);
+      this.debugger('HEX COLOR 2 Brightness: ' + hexColor2);
+      this.debugger('NEW HEX AlphaHex: ' + alphaBrightness);
+      this.debugger('SENT DPS VALUES: ' + dpsTmp.toString());
+      this.debugger('END TUYA SET COLOR LIGHT COLOR ' + this.debugPrefix);
    }
     //return callback(null, 'ff5500');
   }).catch(error => {
-    debug(this.debugPrefix + ' BEGIN TUYA SET COLOR LIGHT COLOR ERROR ' + this.debugPrefix);
-    this.debugger(this.debugPrefix + ' Got Tuya device error for Setting ' + this.name + ' device to: ');
+    debug('BEGIN TUYA SET COLOR LIGHT COLOR ERROR ' + this.debugPrefix);
+    this.debugger('Got Tuya device error for Setting ' + this.name + ' device to: ');
     this.debugger(this.debugPrefix + dpsTmp.toString());
     this.debugger(this.debugPrefix + error.toString());
-    this.debugger(this.debugPrefix + ' END TUYA SET COLOR LIGHT COLOR ERROR ' + this.debugPrefix);
+    this.debugger('END TUYA SET COLOR LIGHT COLOR ERROR ' + this.debugPrefix);
     //eturn callback(error, null);
   });
 };
@@ -266,14 +267,14 @@ TuyaColorLight.prototype.setToWarmWhite = function() {
 
 TuyaColorLight.prototype._getOn = function(callback) {
   this.tuyaColorLight.get(["dps['1']"]).then(status => {
-    this.debugger(this.debugPrefix + ' TUYA GET COLOR LIGHT POWER for ' + this.name + ' dps: 1'  + this.debugPrefix);
-    this.debugger(this.debugPrefix + ' Returned Status: ' + status);
+    this.debugger('TUYA GET COLOR LIGHT POWER for ' + this.name + ' dps: 1'  + this.debugPrefix);
+    this.debugger('Returned Status: ' + status);
     this.debugger(this.debugPrefix +  ' END TUYA GET COLOR LIGHT POWER ' + this.debugPrefix);
     return callback(null, status);
   }).catch(error => {
-    this.debugger(this.debugPrefix + ' TUYA GET COLOR LIGHT POWER ERROR for ' + this.name + ' dps: 1');
+    this.debugger('TUYA GET COLOR LIGHT POWER ERROR for ' + this.name + ' dps: 1');
     this.debugger(this.debugPrefix, error);
-    this.debugger(this.debugPrefix + ' END TUYA GET COLOR LIGHT POWER ERROR ' + this.debugPrefix);
+    this.debugger('END TUYA GET COLOR LIGHT POWER ERROR ' + this.debugPrefix);
     return callback(error, null);
   });
 }
@@ -282,15 +283,16 @@ TuyaColorLight.prototype._setOn = function(on, callback) {
 
   // TODO: Skip if the light is already on...
   this.tuyaColorLight.set({'id': this.devId, set: on, 'dps' : 1}).then(() => {
-    this.debugger(this.debugPrefix + ' TUYA SET COLOR LIGHT POWER ' + this.debugPrefix);
-    this.debugger(this.debugPrefix + ' Setting ' + this.name + ' dps: ' + '1' + ' device to: ' + on);
-    this.debugger(this.debugPrefix + ' END TUYA SET COLOR LIGHT POWER ' + this.debugPrefix);
+    this.debugger('TUYA SET COLOR LIGHT POWER ' + this.debugPrefix);
+    this.debugger('Setting ' + this.name + ' dps: ' + '1' + ' device to: ' + on);
+    this.debugger('END TUYA SET COLOR LIGHT POWER ' + this.debugPrefix);
+    this.powerState = on;
     return callback(null, on);
   }).catch(error => {
-    this.debugger(this.debugPrefix + ' TUYA SET COLOR LIGHT POWER ERROR ' + this.debugPrefix);
+    this.debugger('TUYA SET COLOR LIGHT POWER ERROR ' + this.debugPrefix);
     this.debugger('Got Tuya device error for ' + this.name + ' dps: 1');
     this.debugger(this.debugPrefix, error);
-    this.debugger(this.debugPrefix + ' END TUYA SET COLOR LIGHT POWER ERROR ' + this.debugPrefix);
+    this.debugger('END TUYA SET COLOR LIGHT POWER ERROR ' + this.debugPrefix);
     return callback(error, null);
   });
 }
@@ -299,12 +301,12 @@ TuyaColorLight.prototype._setOn = function(on, callback) {
 
 TuyaColorLight.prototype._getHue = function(callback) {
   var color = this.color;
-  this.debugger(this.debugPrefix + ' HUE: ' + color.H);
+  this.debugger('HUE: ' + color.H);
   callback(null, color.H);
 };
 
 TuyaColorLight.prototype._setHue = function(value, callback) {
-  this.debugger(this.debugPrefix + ' HUE: ', value);
+  this.debugger('HUE: ', value);
 
   if(value === 0 && this.color.S === 0) {
     this.colorMode = 'white';
@@ -415,12 +417,12 @@ TuyaColorLight.prototype.getServices = function() {
 TuyaColorLight.prototype._getAlphaHex = function(brightness) {
   // for (var i = 1; i >= 0; i -= 0.01) {
   var i = brightness  / 100;
-  this.debugger(this.debugPrefix + ' input brightness: ' + brightness + ' and i is ' + i);
+  this.debugger('input brightness: ' + brightness + ' and i is ' + i);
   var alpha = Math.round(i * 255);
   var hex = (alpha + 0x10000).toString(16).substr(-2).toLowerCase();
   var perc = Math.round(i * 100);
 
-  this.debugger(this.debugPrefix + ' alpha percent: ' + perc + '% hex: ' + hex + ' alpha: ' + alpha);
+  this.debugger('alpha percent: ' + perc + '% hex: ' + hex + ' alpha: ' + alpha);
   return hex;
 };
 
@@ -428,13 +430,13 @@ TuyaColorLight.prototype._getAlphaHex = function(brightness) {
 
 TuyaColorLight.prototype._convertPercentageToVal = function(percentage) {
   var tmp = Math.round(255 * (percentage / 100));
-  this.debugger(this.debugPrefix + ' Converted ' + percentage + ' to: ' + tmp);
+  this.debugger('Converted ' + percentage + ' to: ' + tmp);
   return tmp;
 };
 
 TuyaColorLight.prototype._convertValToPercentage = function(val) {
   var tmp = Math.round((val / 255) * 100);
-  this.debugger(this.debugPrefix + ' Converted ' + val + ' to: ' + tmp);
+  this.debugger('Converted ' + val + ' to: ' + tmp);
   return tmp;
 };
 
@@ -442,15 +444,15 @@ TuyaColorLight.prototype._convertColorTemperature = function(val) {
   var tmpRange = this.colorTempMax - this.colorTempMin;
   var tmpCalc = Math.round((val / this.colorTempMax) * 100);
 
-  this.debugger(this.debugPrefix + ' HK colorTemp Value: ' + val);
-  this.debugger(this.debugPrefix + ' HK colorTemp scale min : ' + this.colorTempMin);
-  this.debugger(this.debugPrefix + ' HK colorTemp scale max : ' + this.colorTempMax);
-  this.debugger(this.debugPrefix + ' HK colorTemp range (tmpRange): ' + tmpRange);
-  this.debugger(this.debugPrefix + ' HK colorTemp % tmpCalc: ' + tmpCalc);
+  this.debugger('HK colorTemp Value: ' + val);
+  this.debugger('HK colorTemp scale min : ' + this.colorTempMin);
+  this.debugger('HK colorTemp scale max : ' + this.colorTempMax);
+  this.debugger('HK colorTemp range (tmpRange): ' + tmpRange);
+  this.debugger('HK colorTemp % tmpCalc: ' + tmpCalc);
 
   var tuyaColorTemp = this._convertPercentageToVal(tmpCalc);
 
-  this.debugger(this.debugPrefix + ' HK tuyaColorTemp: ' + tuyaColorTemp);
+  this.debugger('HK tuyaColorTemp: ' + tuyaColorTemp);
 
   return tuyaColorTemp;
 
@@ -463,15 +465,15 @@ TuyaColorLight.prototype._convertColorTemperatureToHK = function(val) {
   var tmpCalc = Math.round((tmpRange * (tuyaColorTempPercent / 100)) + this.colorTempMin);
   var hkValue = Math.round(tmpCalc);
 
-  this.debugger(this.debugPrefix + ' Tuya color Temperature : ' + val);
-  this.debugger(this.debugPrefix + ' Tuya color temp Percent of 255: ' + tuyaColorTempPercent + '%');
+  this.debugger('Tuya color Temperature : ' + val);
+  this.debugger('Tuya color temp Percent of 255: ' + tuyaColorTempPercent + '%');
 
-  this.debugger(this.debugPrefix + ' HK colorTemp scale min : ' + this.colorTempMin);
-  this.debugger(this.debugPrefix + ' HK colorTemp scale max : ' + this.colorTempMax);
+  this.debugger('HK colorTemp scale min : ' + this.colorTempMin);
+  this.debugger('HK colorTemp scale max : ' + this.colorTempMax);
 
-  this.debugger(this.debugPrefix + ' HK Color Temp Range: ' + tmpRange);
-  this.debugger(this.debugPrefix + ' HK range %: ' + tuyaColorTempPercent);
-  this.debugger(this.debugPrefix + ' HK Value: ' + hkValue);
+  this.debugger('HK Color Temp Range: ' + tmpRange);
+  this.debugger('HK range %: ' + tuyaColorTempPercent);
+  this.debugger('HK Value: ' + hkValue);
 
   return hkValue;
 
@@ -480,11 +482,11 @@ TuyaColorLight.prototype._convertColorTemperatureToHK = function(val) {
 
 TuyaColorLight.prototype.debugger = function(args) {
   if(this.debug == true) {
-      debug(args);
+    this.log.debug(this.debugPrefix, args);
   }
 };
 
 TuyaColorLight.prototype.identify = function (callback) {
-  debug(this.debugPrefix + _this.config.name + " was identified.");
+  this.debugger(this.debugPrefix + _this.config.name + " was identified.");
   callback();
 };

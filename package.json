@@ -1,64 +1,44 @@
 {
-  "_from": "homebridge-tuya-colorlight",
-  "_id": "homebridge-tuya-colorlight@1.0",
-  "_inBundle": false,
-  "_location": "/homebridge-tuya-colorlight",
-  "_phantomChildren": {},
-  "_requested": {
-    "type": "tag",
-    "registry": true,
-    "raw": "homebridge-tuya-colorlight",
-    "name": "homebridge-tuya-colorlight",
-    "escapedName": "homebridge-tuya-colorlight",
-    "rawSpec": "",
-    "saveSpec": null,
-    "fetchSpec": "latest"
-  },
-  "_requiredBy": [
-    "#USER",
-    "/"
-  ],
-  "_resolved": "https://registry.npmjs.org/homebridge-tuya-colorlight/-/homebridge-tuya-colorlight-1.0.1.tgz",
-  "_shasum": "0abbfb5bb8130d6d0003e8e8d657c46fda20f880",
-  "_spec": "homebridge-tuya-powerstrip",
-  "_where": "/home/pi/.homebridge",
-  "author": {
-    "name": "Eric Rosebrock",
-    "email": "webfreakeric@gmail.com",
-    "url": "https://github.com/drumfreak"
-  },
-  "bugs": {
-    "url": "https://github.com/drumfreak/homebridge-tuya-powerstrip/issues"
-  },
-  "bundleDependencies": false,
-  "dependencies": {
-    "debug": "^3.1.0",
-    "homebridge-tuyapi-extended": "^1.0.5"
-  },
-  "deprecated": false,
-  "description": "Tuya color LED light control for homebridge. Based on codetheweb's Tuya API and tuya outlet plugins. ",
-  "engines": {
-    "homebridge": ">=0.2.0",
-    "node": ">=0.12.0"
-  },
-  "homepage": "https://github.com/drumfreak/homebridge-tuya-colorlight#readme",
-  "keywords": [
-    "tuya",
-    "outlet",
-    "powerstrip",
-    "homebridge-plugin",
-    "homebridge",
-    "jinvoo"
-  ],
-  "license": "MIT",
-  "main": "index.js",
   "name": "homebridge-tuya-colorlight",
+  "version": "1.0.1",
+  "description": "Tuya color LED light control for homebridge. Based on codetheweb's Tuya API and tuya outlet plugins. ",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/drumfreak/homebridge-tuya-colorlight.git"
   },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "author": "Eric Rosebrock <webfreakeric@gmail.com> (https://github.com/drumfreak)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/drumfreak/homebridge-tuya-colorlight/issues"
   },
-  "version": "1.0"
+  "homepage": "https://github.com/drumfreak/homebridge-tuya-colorlight#readme",
+
+
+  "keywords": [
+    "homebridge-plugin",
+    "tuya",
+    "lightbulb",
+    "bulb",
+    "led",
+    "lohas",
+    "wifi",
+    "smarthome"
+  ],
+
+
+  "engines": {
+    "node": ">=0.12.0",
+    "homebridge": ">=0.2.0"
+  },
+  "dependencies": {
+    "debug": "^3.1.0",
+    "homebridge-tuyapi-extended": "^1.0.6",
+    "color-convert": "^1.5.0"
+  }
+
+
 }
