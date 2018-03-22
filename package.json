@@ -1,6 +1,6 @@
 {
   "name": "homebridge-tuya-colorlight",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Tuya color LED light control for homebridge. Based on codetheweb's Tuya API and tuya outlet plugins. ",
   "main": "index.js",
   "scripts": {

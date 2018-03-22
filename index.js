@@ -95,6 +95,8 @@ TuyaColorLight.prototype._getLightStatus = function(callback) {
     if(status.dps['3'] !== undefined) {
       this.brightness = this._convertValToPercentage(status.dps['3']);
       this.brightnessService.value = this._convertValToPercentage(status.dps['3']); // update the ui for brightness
+      this.lightness = Math.round(this.brightness / 2);
+
     }
 
     if(status.dps['4'] !== undefined) {
@@ -109,7 +111,7 @@ TuyaColorLight.prototype._getLightStatus = function(callback) {
         var converted = convert.hex.hsl(status.dps['5'].substring(0,6));
         var converted2 = convert.hex.hsl(status.dps['5'].substring(6,12));
 
-        var alphaHex = status.dps['5'].substring(12,14).toLowerCase();
+        var alphaHex = status.dps['5'].substring(12,14);
 
         this.color.H = converted[0];
         this.color.S = converted[1];
@@ -122,25 +124,25 @@ TuyaColorLight.prototype._getLightStatus = function(callback) {
         this.hueService.value = this.hue;
         this.saturation = this.color.S;
         this.saturationService.value = this.saturation;
-        this.lightness = this.color.L;
 
-        var hexColor1 = convert.hsl.hex(this.color.H, this.color.S, this.color.L).toLowerCase();
-        var hexColor2 = convert.hsl.hex(this.color2.H, this.color2.S, this.color2.L).toLowerCase();
+        var hexColor1 = convert.hsl.hex(this.color.H, this.color.S, this.color.L)
+        var hexColor2 = convert.hsl.hex(this.color2.H, this.color2.S, this.color2.L);
 
       }
 
       if(!this.debug) {
         this.log.info('Received update for Tuya Color LED Light: ' + this.name);
       } else {
-        this.debugger(this.debugPrefix + " dps[1] : " + status.dps['1']);
-        this.debugger(this.debugPrefix + " dps[2] : " + status.dps['2']);
-        this.debugger(this.debugPrefix + " dps[3] : " + status.dps['3']);
-        this.debugger(this.debugPrefix + " dps[4] : " + status.dps['4']);
-        this.debugger(this.debugPrefix + " dps[5] : " + status.dps['5']);
-        this.debugger(this.debugPrefix + " dps[6] : " + status.dps['6']);
-        this.debugger(this.debugPrefix + " dps[7] : " + status.dps['7']);
-        this.debugger(this.debugPrefix + " dps[8] : " + status.dps['8']);
-        this.debugger(this.debugPrefix + " dps[9] : " + status.dps['9']);
+        this.debugger("dps[1]: " + status.dps['1']);
+        this.debugger("dps[2]: " + status.dps['2']);
+        this.debugger("dps[3]: " + status.dps['3']);
+        this.debugger("dps[4]: " + status.dps['4']);
+        this.debugger("dps[5]: " + status.dps['5']);
+        this.debugger("dps[6]: " + status.dps['6']);
+        this.debugger("dps[7]: " + status.dps['7']);
+        this.debugger("dps[8]: " + status.dps['8']);
+        this.debugger("dps[9]: " + status.dps['9']);
+        this.debugger("dps[10]: " + status.dps['10']);
 
         this.debugger('Factored Results ' + this.name + ' device properties...');
         this.debugger('TUYA Light [1] Power: ' + this.onService.value);
@@ -156,7 +158,6 @@ TuyaColorLight.prototype._getLightStatus = function(callback) {
         this.debugger('TUYA Light DEVICE COLOR 2: ' + status.dps['5'].substring(6,12));
         this.debugger('TUYA Light Color 2 Hex to HSL: ' + converted2);
         this.debugger('TUYA Light Color 2 HSL to HEX: ' + hexColor2);
-        this.debugger('TUYA Light Color Alpha Hex Val: ' + status.dps['5'].substring(12,14));
         this.debugger('TUYA Light Color Alpha Hex Val: ' + status.dps['5'].substring(12,14));
         this.debugger('TUYA Light Color ALPHAHEX: ' + alphaHex);
       }
@@ -187,63 +188,81 @@ TuyaColorLight.prototype.setToCurrentColor = function() {
   var color1 = this.color;
   var color2 = this.color2;
 
+  var lightness = Math.round(this.brightness / 2);
   var apiBrightness = this._convertPercentageToVal(this.brightness);
   var alphaBrightness = this._getAlphaHex(this.brightness);
 
-  var hexColor1 = convert.hsl.hex(color1.H, color1.S, color1.L).toLowerCase();
-  var rgbColor1 = convert.hsl.rgb(color1.H, color1.S, color1.L);
-  var color1R = Math.round((rgbColor1[0] / 100) * this.brightness);
-  var color1G = Math.round((rgbColor1[1] / 100) * this.brightness);
-  var color1B = Math.round((rgbColor1[2] / 100) * this.brightness);
+  var hexColorOriginal1 = convert.hsl.hex(color1.H, color1.S, color2.L);
+  var rgbColorOriginal1 = convert.hsl.rgb(color1.H, color1.S, color2.L);
 
-  var hexColor1Brightened = convert.rgb.hex(color1R, color1G, color1B).toLowerCase();
+  var hexColorOriginal2 = convert.hsl.hex(0, 0, 50);
+  var rgbColorOriginal2 = convert.hsl.rgb(0, 0, 50);
 
-  var hexColor2 = convert.hsl.hex(color2.H, color2.S, color2.L).toLowerCase();
-  var rgbColor2 = convert.hsl.rgb(color2.H, color2.S, color2.L);
-  var color2R = Math.round((rgbColor2[0] / 100) * this.brightness);
-  var color2G = Math.round((rgbColor2[1] / 100) * this.brightness);
-  var color2B = Math.round((rgbColor2[2] / 100) * this.brightness);
+  var hexColor1 = convert.hsl.hex(color1.H, color1.S, lightness);
+  var rgbColor1 = convert.hsl.rgb(color1.H, color1.S, lightness);
 
-  var hexColor2Brightened = convert.rgb.hex(color2R, color2G, color2B).toLowerCase();
+  var hexColor2 = convert.hsl.hex(0, 0, lightness);
+  var rgbColor2 = convert.hsl.rgb(0, 0, lightness);
 
+  // var ww = Math.round((this.brightness * 255) / 100);
 
-  var ww = Math.round((this.brightness * 255) / 100);
+  lightColor = (hexColor1  + hexColor2 + alphaBrightness).toLowerCase();
 
-  lightColor = hexColor1Brightened  + 'ffffff' + 'ff';
+  var temperature = (this.colorMode === 'colour') ? 255 : this._convertColorTemperature(this.colorTemperature);
 
   var dpsTmp = {
                 '1' : true,
                 '2' : this.colorMode,
                 '3' : apiBrightness,
-                '4' : this._convertColorTemperature(this.colorTemperature),
+                '4' : temperature,
                 '5' : lightColor
                 // '6' : hexColor + hexColor + 'ff'
               };
 
-
-
   this.tuyaColorLight.setDps({'id': this.devId, 'dps' : dpsTmp}).then(() => {
     if(this.debug) {
       this.debugger('BEGIN TUYA SET COLOR LIGHT COLOR ' + this.debugPrefix);
-      this.debugger('Color 1 R ORIGINAL ' + rgbColor1[0] + ' R at ' + this.brightness + '% Brightness: ' + color1R);
-      this.debugger('Color 1 G ORIGINAL ' + rgbColor1[1] + ' G at ' + this.brightness + '% Brightness: ' + color1G);
-      this.debugger('Color 1 B ORIGINAL ' + rgbColor1[1] + ' B at ' + this.brightness + '% Brightness: ' + color1B);
-      this.debugger('Color 1 Original Hex: ' + hexColor1 + ' at ' + this.brightness + '% Brightness: ' + hexColor1Brightened);
-      this.debugger('Color 2 R ORIGINAL ' + rgbColor2[0] + ' R at ' + this.brightness + '% Brightness: ' + color2R);
-      this.debugger('Color 2 G ORIGINAL ' + rgbColor2[1] + ' G at ' + this.brightness + '% Brightness: ' + color2G);
-      this.debugger('Color 2 B ORIGINAL ' + rgbColor2[1] + ' B at ' + this.brightness + '% Brightness: ' + color2B);
-      this.debugger('Color 2 Original Hex: ' + hexColor2 + ' at ' + this.brightness + '% Brightness: ' + hexColor2Brightened);
-      this.debugger('ww ' + ww);
+
+      this.debugger('HSL Settings - [(H)ue] ' + this.color.H);
+      this.debugger('HSL Settings - [(S)aturation] ' + this.color.S);
+      this.debugger('HSL Settings - [(L)ightness] ' + lightness);
+
+      this.debugger('HEX COLOR 1 ORIGINAL: ' + hexColorOriginal1);
+      this.debugger('HEX COLOR 1 at ' + this.brightness + '% Brightness: ' + hexColor1);
+
+      this.debugger('Color 1 ORIGINAL Hex: ' + hexColorOriginal1 + ' at ' + this.brightness + '% Brightness: ' + hexColor1);
+      this.debugger('Color 1 RGB ORIGINAL: ' + rgbColorOriginal1 + ' at ' + this.brightness + '% Brightness: ' + rgbColor1);
+      this.debugger('Color 1 R ORIGINAL ' + rgbColorOriginal1[0] + ' R at ' + this.brightness + '% Brightness: ' + rgbColor1[0]);
+      this.debugger('Color 1 G ORIGINAL ' + rgbColorOriginal1[1] + ' G at ' + this.brightness + '% Brightness: ' + rgbColor1[1]);
+      this.debugger('Color 1 B ORIGINAL ' + rgbColorOriginal1[2] + ' B at ' + this.brightness + '% Brightness: ' + rgbColor1[2]);
+
+      this.debugger('HEX COLOR 2 ORIGINAL: ' + hexColorOriginal2);
+      this.debugger('HEX COLOR 2 at ' + this.brightness + '% Brightness: ' + hexColor2);
+
+      this.debugger('Color 2 RGB ORIGINAL: ' + rgbColorOriginal2 + ' at ' + this.brightness + '% Brightness: ' + rgbColor2);
+      this.debugger('Color 2 R ORIGINAL ' + rgbColorOriginal2[0] + ' R at ' + this.brightness + '% Brightness: ' + rgbColor2[0]);
+      this.debugger('Color 2 G ORIGINAL ' + rgbColorOriginal2[1] + ' G at ' + this.brightness + '% Brightness: ' + rgbColor2[1]);
+      this.debugger('Color 2 B ORIGINAL ' + rgbColorOriginal2[2] + ' B at ' + this.brightness + '% Brightness: ' + rgbColor2[2]);
+
+      this.debugger('NEW HEX AlphaHex: ' + alphaBrightness);
+
       this.debugger('SETTING ' + this.name + " device to ");
       this.debugger('SETTING LIGHT MODE: ' + dpsTmp['2']);
       this.debugger('SETTING BRIGHTNESS: ' + this.brightness + '% or ' + dpsTmp['3'] + ' of 255');
-      this.debugger('SETTING COLOR TEMPERATURE: ' + this._convertColorTemperature(this.colorTemperature) + ' or ' + dpsTmp['4'] + ' of 255');
-      this.debugger('HEX COLOR 1: ' + hexColor1);
-      this.debugger('HEX COLOR 1 Brightness: ' + hexColor1Brightened);
-      this.debugger('HEX COLOR 2: ' + hexColor2);
-      this.debugger('HEX COLOR 2 Brightness: ' + hexColor2);
-      this.debugger('NEW HEX AlphaHex: ' + alphaBrightness);
-      this.debugger('SENT DPS VALUES: ' + dpsTmp.toString());
+      this.debugger('SETTING COLOR TEMPERATURE: ' + temperature + ' or ' + dpsTmp['4'] + ' of 255');
+
+      this.debugger('SENT DPS VALUES: ');
+
+      this.debugger("SENT dps[1]: " + dpsTmp['1']);
+      this.debugger("SENT dps[2]: " + dpsTmp['2']);
+      this.debugger("SENT dps[3]: " + dpsTmp['3']);
+      this.debugger("SENT dps[4]: " + dpsTmp['4']);
+      this.debugger("SENT dps[5]: " + dpsTmp['5']);
+      // this.debugger("Sent dps[6]: " + dpsTmp['6']);
+      // this.debugger("Sent dps[7]: " + dpsTmp['7']);
+      // this.debugger("Sent dps[8]: " + dpsTmp['8']);
+      // this.debugger("Sent dps[9]: " + dpsTmp['9']);
+      // this.debugger("Sent dps[10]: " + dpsTmp['10']);
       this.debugger('END TUYA SET COLOR LIGHT COLOR ' + this.debugPrefix);
    }
     //return callback(null, 'ff5500');
@@ -301,12 +320,12 @@ TuyaColorLight.prototype._setOn = function(on, callback) {
 
 TuyaColorLight.prototype._getHue = function(callback) {
   var color = this.color;
-  this.debugger('HUE: ' + color.H);
+  this.debugger('GET HUE: ' + color.H);
   callback(null, color.H);
 };
 
 TuyaColorLight.prototype._setHue = function(value, callback) {
-  this.debugger('HUE: ', value);
+  this.debugger('SET HUE: ', value);
 
   if(value === 0 && this.color.S === 0) {
     this.colorMode = 'white';
@@ -419,7 +438,7 @@ TuyaColorLight.prototype._getAlphaHex = function(brightness) {
   var i = brightness  / 100;
   this.debugger('input brightness: ' + brightness + ' and i is ' + i);
   var alpha = Math.round(i * 255);
-  var hex = (alpha + 0x10000).toString(16).substr(-2).toLowerCase();
+  var hex = (alpha + 0x10000).toString(16).substr(-2);
   var perc = Math.round(i * 100);
 
   this.debugger('alpha percent: ' + perc + '% hex: ' + hex + ' alpha: ' + alpha);
@@ -481,7 +500,7 @@ TuyaColorLight.prototype._convertColorTemperatureToHK = function(val) {
 
 
 TuyaColorLight.prototype.debugger = function(args) {
-  if(this.debug == true) {
+  if(this.debug === true) {
     this.log.debug(this.debugPrefix, args);
   }
 };

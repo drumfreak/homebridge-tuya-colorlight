@@ -26,10 +26,9 @@ Example `config.json` for Tuya based multiple LED Color Lights:
             "accessory": "TuyaColorLight",
             "name": "Fountain Color Light",
             "ip": "192.168.104.31",
+            "productId":"IXXXXXXXXXW",
             "devId": "XXXXXXXXXX",
             "localKey": "XXXXXXXXXXXXXX",
-            "gwId":"XXXXXXXXXXXXXXXX",
-            "productKey":"IXXXXXXXXXW",
             "debugPrefix" : "~~~~~~~~~~~~~~~~~~~~~ ",
             "debug" : false
         },
@@ -38,10 +37,9 @@ Example `config.json` for Tuya based multiple LED Color Lights:
             "accessory": "TuyaColorLight",
             "name": "Tree Color Light",
             "ip": "192.168.104.32",
+            "productId":"IXXXXXXXXXW",
             "devId": "XXXXXXXXXX",
             "localKey": "XXXXXXXXXXXXXX",
-            "gwId":"XXXXXXXXXXXXXXXX",
-            "productKey":"IXXXXXXXXXW",
             "debugPrefix" : "~~~~~~~~~~~~~~~~~~~~~ ",
             "debug" : false
         }
@@ -58,8 +56,9 @@ See [tuyapi](https://github.com/codetheweb/tuya-device) for original inspiration
 
 Tested on the following LED lights (Non affiliated links following:)
 * [LOHAS RGB Floodlight 10W, Smart Control, Waterproof(IP65)](https://www.amazon.com/gp/product/B0796NFV4K/)
+* [LOHAS LED GU24 Bulb, A19 Smart Wi-Fi Light, Color Changing Multicolor Dimmable Bulbs, 60W Equivalent](https://www.amazon.com/gp/product/B078JN566Z)
 
-This plugin should work with any TUYA based LED Color light that can be added to the Tuya, or Smart Life apps. A popular brand I've found is [LOHAS Lights](http://www.lohas-led.com/) [LOHAS Lights on Amazon](https://www.amazon.com/s?ie=UTF8&me=A2X4NE86JUW3T&page=1)
+This plugin should work with any TUYA based LED Color light that can be added to the Tuya, or Smart Life apps. A popular brand I've found is [LOHAS Lights](http://www.lohas-led.com/) or on Amazon: [LOHAS Lights on Amazon](https://www.amazon.com/s?ie=UTF8&me=A2X4NE86JUW3T&page=1)
 
 Helpful things to note:
 
