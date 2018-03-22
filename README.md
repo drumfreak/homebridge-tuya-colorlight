@@ -12,8 +12,13 @@ Example `config.json` for LED Color Light Controllers that support RGB or RGBWW:
             "localKey": "XXXXXXXXXXXXXX",
             "gwId":"XXXXXXXXXXXXXXXX",
             "productKey":"IXXXXXXXXXW",
-            "debugPrefix" : "~~~~~~~~~~~~~~~~~~~~~ ",
-            "debug" : false
+            "apiMinTimeout" : 0,
+            "apiMaxTimeout" : 200,
+            "apiRetries": 0,
+            "apiDebug" : false,
+            "debugPrefix" : "~!~ ",
+            "debug" : false,
+            "deviceEnabled" : true
         }
     ]
 
@@ -29,8 +34,13 @@ Example `config.json` for Tuya based multiple LED Color Lights:
             "productId":"IXXXXXXXXXW",
             "devId": "XXXXXXXXXX",
             "localKey": "XXXXXXXXXXXXXX",
-            "debugPrefix" : "~~~~~~~~~~~~~~~~~~~~~ ",
-            "debug" : false
+            "apiMinTimeout" : 0,
+            "apiMaxTimeout" : 200,
+            "apiRetries": 0,
+            "apiDebug" : false,
+            "debugPrefix" : "~!~ ",
+            "debug" : false,
+            "deviceEnabled" : true
         },
 
         {
@@ -40,8 +50,13 @@ Example `config.json` for Tuya based multiple LED Color Lights:
             "productId":"IXXXXXXXXXW",
             "devId": "XXXXXXXXXX",
             "localKey": "XXXXXXXXXXXXXX",
-            "debugPrefix" : "~~~~~~~~~~~~~~~~~~~~~ ",
-            "debug" : false
+            "apiMinTimeout" : 0,
+            "apiMaxTimeout" : 200,
+            "apiRetries": 0,
+            "apiDebug" : false,
+            "debugPrefix" : "~!~ ",
+            "debug" : false,
+            "deviceEnabled" : true
         }
     ]
 

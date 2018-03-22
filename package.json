@@ -1,6 +1,6 @@
 {
   "name": "homebridge-tuya-colorlight",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "Tuya color LED light control for homebridge. Based on codetheweb's Tuya API and tuya outlet plugins. ",
   "main": "index.js",
   "scripts": {
@@ -17,7 +17,6 @@
   },
   "homepage": "https://github.com/drumfreak/homebridge-tuya-colorlight#readme",
 
-
   "keywords": [
     "homebridge-plugin",
     "tuya",
@@ -29,14 +28,13 @@
     "smarthome"
   ],
 
-
   "engines": {
     "node": ">=0.12.0",
     "homebridge": ">=0.2.0"
   },
   "dependencies": {
     "debug": "^3.1.0",
-    "homebridge-tuyapi-extended": "^1.0.6",
+    "homebridge-tuyapi-extended": ">=1.0.7",
     "color-convert": "^1.5.0"
   }
 
