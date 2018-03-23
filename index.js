@@ -1,7 +1,10 @@
 const tuya = require('homebridge-tuyapi-extended');
 const convert = require('color-convert');
+const debug = require('debug');
+
 
 module.exports = function(homebridge) {
+  //console.log("homebridge API version: " + homebridge.version);
   Service = homebridge.hap.Service;
   Characteristic = homebridge.hap.Characteristic;
   homebridge.registerAccessory("homebridge-tuya-colorlight", "TuyaColorLight", TuyaColorLight);
@@ -12,7 +15,7 @@ function TuyaColorLight(log, config) {
   this.log = log;
   this.name = config.name;
   this.log.prefix = 'Tuya Color Light - ' + this.name;
-  const debug = require('debug')('[Tuya Color Light - '  + this.name + ' ]  ');
+  debug.prefix = ' Tuya Color Light - '  + this.name;
 
   this.debug = config.debug || false;
   this.debugPrefix = config.debugPrefix || '~~~  '
@@ -20,7 +23,6 @@ function TuyaColorLight(log, config) {
   this.deviceEnabled = (typeof config.deviceEnabled === 'undefined') ? true : config.deviceEnabled;
 
   this.devId = config.devId;
-  this.powerState = true;
 
   this.colorMode = 'white';
   this.brightness = 100; // percentage value use _convertValToPercentage functions below.
@@ -38,13 +40,17 @@ function TuyaColorLight(log, config) {
 
   this.dps = {};
 
+  this.powerState = false;
+  this.noUpdate = false;
+
+
   // API timeout settings, tweak via config.
   this.apiMinTimeout = (typeof config.apiMinTimeout === undefined) ? 100 : config.apiMinTimeout;
   this.apiMaxTimeout = (typeof config.apiMaxTimeout  === undefined) ? 2000 : config.apiMaxTimeout;
   this.apiRetries = (typeof config.apiRetries === undefined) ? 1 : config.apiRetries;
   this.apiDebug = config.apiDebug || false;
 
-  this.debugger(JSON.stringify(config));
+  //this.debugger(JSON.stringify(config));
 
   if(this.debug === true && this.apiDebug === true) {
     this.debugger('Tuya API Settings - Retries: ' + this.apiRetries + ' Debug: ' + this.apiDebug + ' Min Timeout: ' + this.apiMinTimeout + ' Max Timeout: ' + this.apiMaxTimeout);
@@ -52,46 +58,15 @@ function TuyaColorLight(log, config) {
 
   // Setup Tuya Color Light
   if (config.ip != undefined && this.deviceEnabled === true) {
-
     this.debugger('Tuya Color Light ' + this.name + ' Ip is defined as ' + config.ip);
-
     this.tuyaColorLight = new tuya({type: 'color-lightbulb', ip: config.ip, id: config.devId, key: config.localKey, name: this.name, apiRetries: this.apiRetries, apiMinTimeout: this.apiMinTimeout, apiMaxTimeout: this.apiMaxTimeout, apiDebug: this.apiDebug, apiDebugPrefix: this.debugPrefix}, log);
-
   } else if(this.deviceEnabled === true) {
-
     this.debugger(this.debugPrefix + 'Tuya Color Light ' + this.name + ' IP is undefined, resolving Ids and this usually does not work, so set a static IP for your powerstrip and add it to the config...');
-
     this.tuyaColorLight = new tuya({type: 'color-lightbulb', id: config.devId, key: config.localKey, name: this.name, apiRetries: this.apiRetries, apiMinTimeout: this.apiMinTimeout, apiMaxTimeout: this.apiMaxTimeout, apiDebug: this.apiDebug, apiDebugPrefix: this.debugPrefix}, log);
-
     this.tuyaColorLight.resolveIds(); // This method sucks... it hangs, it doesn't resolve properly. Fix it.
-
   }
 
-  this.services = this.getServices();
 
-  // Pull an update from Tuya
-  this._getLightStatus(function(error, result) {
-    if(result) {
-      this.services[1].setCharacteristic(Characteristic.On, result.powerState); // bool
-      this.services[1].setCharacteristic(Characteristic.Hue, result.hue); // float
-      this.services[1].setCharacteristic(Characteristic.Saturation, result.saturation); // float
-      this.services[1].setCharacteristic(Characteristic.Brightness, result.brightness); // float
-      this.services[1].setCharacteristic(Characteristic.ColorTemperature, result.colorTemperature); // int
-
-      if(this.debug) {
-        this.debugger('LIGHT ON STATUS IS: ' + result.powerState);
-        this.debugger('Light Characteristics Service 1: ' + JSON.stringify(this.services, null, 10));
-      } else {
-        this.log.info('Updated light power status to: ' + result.powerState);
-      }
-      // this.services[4].value = result.brightness;
-      return result;
-    } else {
-      this.services[1].setCharacteristic(Characteristic.On, false); // bool
-      return {};
-    }
-    // Extend this some more to get the rest of the data collected to the proper state.
-  }.bind(this));
 
   /* Device Function Points from Tuya lights... what a party to figure out.
   dps:
@@ -112,68 +87,78 @@ function TuyaColorLight(log, config) {
 };
 
 
-TuyaColorLight.prototype._getLightStatus = function(callback) {
+TuyaColorLight.prototype.updateLight = function() {
 
   if(this.deviceEnabled === false) {
     this.log.warn('Device is disabled... Bailing out...');
-    return callback('Disabled', null);
+    return;
   }
 
-  this.tuyaColorLight.get({schema: true}).then(status => {
+  this.tuyaColorLight.getCB({schema: true}, function(error, status) {
     this.debugger('BEGIN TUYA COLOR LIGHT STATUS ' + this.debugPrefix);
     this.debugger('Getting Tuya Color Light device status');
 
-    var result = {}
-
-    result.powerState = status.dps['1'];
-
-    if(status.dps['2'] !== undefined) {
-      result.colorMode = status.dps['2']; // colour or white
+    if(error) {
+      this.debugger(error);
+      return error;
     }
 
-    if(status.dps['3'] !== undefined) {
-      result.brightness = this._convertValToPercentage(status.dps['3']);
-      result.lightness = Math.round(this.brightness / 2);
-    }
 
-    if(status.dps['4'] !== undefined) {
-      result.colorTemperature = status.dps['4']; // TODO FIX
-    }
+    if(status !== undefined) {
 
-    if(status.dps !== undefined) {
+      if(status.dps['1'] !== undefined) {
+        this.powerState = status.dps['1'];
+      }
+
+      if(status.dps['2'] !== undefined) {
+        this.colorMode = status.dps['2']; // colour or white
+      }
+
+      if(status.dps['3'] !== undefined) {
+        this.brightness = this._convertValToPercentage(status.dps['3']);
+      }
+
+      if(status.dps['4'] !== undefined) {
+        this.colorTemperature = status.dps['4']; // TODO FIX
+      }
 
       if(status.dps['5'] !== undefined) {
-
         var converted = convert.hex.hsl(status.dps['5'].substring(0,6));
         var converted2 = convert.hex.hsl(status.dps['5'].substring(6,12));
 
-        var alphaHex = status.dps['5'].substring(12,14);
-
-        result.color = {};
-        result.color.H = converted[0];
-        result.color.S = converted[1];
-        result.color.L = converted[2];
+        this.color.H = converted[0];
+        this.color.S = converted[1];
+        this.color.L = converted[2];
 
         // What is this? Some kind of mask? Yes...
-        result.color2 = {};
-        result.color2.H = converted2[0];
-        result.color2.S = converted2[1];
-        result.color2.L = converted2[2];
+        this.color2 = {};
+        this.color2.H = converted2[0];
+        this.color2.S = converted2[1];
+        this.color2.L = converted2[2];
 
-        result.alphaHex = alphaHex; // I believe this equates to brightness, or alpha in 2 hex chars: ff = 100%, 00 = 0%;
-        result.hue = result.color.H;
+        var alphaHex = status.dps['5'].substring(12,14);
 
-        result.saturation = result.color.S;
+        this.alphaHex = alphaHex; // I believe this equates to brightness, or alpha in 2 hex chars: ff = 100%, 00 = 0%;
 
-        if(result.colorMode === 'colour') {
+        this.hue = this.color.H;
+
+        this.saturation = this.color.S;
+
+        if(this.colorMode === 'colour') {
            // How do we set brightness though if it's in colour mode?
-          result.brightness = result.color.L; // maybe * 2
+          this.brightness = this.color.L * 2; // maybe * 2
+          if(this.brightness > 100) {
+            this.brightness = 100;
+          }
         }
 
-        var hexColor1 = convert.hsl.hex(result.color.H, result.color.S, result.color.L)
-        var hexColor2 = convert.hsl.hex(result.color2.H, result.color2.S, result.color2.L);
+        this.lightness = Math.round(this.brightness / 2);
+
+        var hexColor1 = convert.hsl.hex(this.color.H, this.color.S, this.color.L)
+        var hexColor2 = convert.hsl.hex(this.color2.H, this.color2.S, this.color2.L);
 
       }
+
 
       if(!this.debug) {
         this.log.info('Received update for Tuya Color LED Light');
@@ -190,13 +175,13 @@ TuyaColorLight.prototype._getLightStatus = function(callback) {
         this.debugger("dps[10]: " + status.dps['10']);
 
         this.debugger('Factored Results ' + this.name + ' device properties...');
-        this.debugger('TUYA Light [1] Power: ' + result.powerState);
-        this.debugger('TUYA Light [2] Color Mode: ' + result.colorMode);
-        this.debugger('TUYA Light [3] BRIGHTNESS: ' + result.brightness + '%');
-        this.debugger('TUYA Light [4] TEMPERATURE: ' + result.colorTemperature);
-        this.debugger('TUYA Light [5] (H)UE: ' + result.hue);
-        this.debugger('TUYA Light [5] (S)ATURATION: ' + result.saturation + '%');
-        this.debugger('TUYA Light [5] (L)ightness: ' + result.lightness + '%');
+        this.debugger('TUYA Light [1] Power: ' + this.powerState);
+        this.debugger('TUYA Light [2] Color Mode: ' + this.colorMode);
+        this.debugger('TUYA Light [3] BRIGHTNESS: ' + this.brightness + '%');
+        this.debugger('TUYA Light [4] TEMPERATURE: ' + this.colorTemperature);
+        this.debugger('TUYA Light [5] (H)UE: ' + this.hue);
+        this.debugger('TUYA Light [5] (S)ATURATION: ' + this.saturation + '%');
+        this.debugger('TUYA Light [5] (L)ightness: ' + this.lightness + '%');
         this.debugger('TUYA Light DEVICE COLOR 1: ' + status.dps['5'].substring(0,6));
         this.debugger('TUYA Light Color 1 Hex to HSL: ' + converted);
         this.debugger('TUYA Light Color 1 HSL to HEX: ' + hexColor1);
@@ -207,23 +192,13 @@ TuyaColorLight.prototype._getLightStatus = function(callback) {
         this.debugger('TUYA Light Color ALPHAHEX: ' + alphaHex);
       }
 
+
+      this.debugger('END TUYA COLOR LIGHT STATUS ' + this.debugPrefix);
+      // return callback(null, this);
       // this.brightness = status.dps['3'] / 255 * 100;
     }
 
-    this.debugger('END TUYA COLOR LIGHT STATUS ' + this.debugPrefix);
-
-    return callback(null, result);
-
-  }).catch(error => {
-    this.debugger('BEGIN TUYA GET COLOR LIGHT STATUS ERROR ' + this.debugPrefix);
-    this.debugger('Got Tuya Color Light device ERROR for ' + this.name);
-    this.debugger(this.debugPrefix + error);
-    this.debugger('END TUYA GET COLOR POWER STATUS ERROR ' + this.debugPrefix);
-    if(!this.debug) {
-      this.log.warn(this.debugPrefix + error.message);
-    }
-    return callback(error, null);
-  });
+  }.bind(this));
 }
 
 
@@ -232,9 +207,13 @@ TuyaColorLight.prototype._getLightStatus = function(callback) {
 TuyaColorLight.prototype.setToCurrentColor = function() {
   if(this.deviceEnabled === false) {
     this.log.warn('Device is disabled... Bailing out...');
-    return callback('Disabled', null);
+    return;
   }
 
+  if(this.noUpdate === true) {
+    this.log.warn('Device is in noUpdate mode... Bailing out...');
+    return;
+  }
 
   var color1 = this.color;
   var color2 = this.color2;
@@ -341,17 +320,29 @@ TuyaColorLight.prototype._getOn = function(callback) {
     return callback('Disabled', null);
   }
 
-  this.tuyaColorLight.get(["dps['1']"]).then(status => {
-    this.debugger('TUYA GET COLOR LIGHT POWER for ' + this.name + ' dps: 1'  + this.debugPrefix);
-    this.debugger('Returned Status: ' + status);
-    this.debugger(this.debugPrefix +  ' END TUYA GET COLOR LIGHT POWER ' + this.debugPrefix);
-    return callback(null, status);
-  }).catch(error => {
-    this.debugger('TUYA GET COLOR LIGHT POWER ERROR for ' + this.name + ' dps: 1');
-    this.debugger(error.message);
-    this.debugger('END TUYA GET COLOR LIGHT POWER ERROR ' + this.debugPrefix);
-    return callback(error, null);
-  });
+  var that = this;
+  // if(this.noUpdate === true) {
+  //   this.log.warn('Skipping _getOn noUpdate... Bailing out...');
+  //   return callback(null, this.powerState);
+  // }
+
+  this.tuyaColorLight.getCB(["dps['1']"], function(error, status)  {
+
+    if(error) {
+      return callback(error, null);
+    }
+    that.debugger(status);
+
+
+    if(status) {
+      that.debugger('TUYA GET COLOR LIGHT POWER for ' + that.name + ' dps: 1'  + this.debugPrefix);
+      that.debugger('Returned Status: ' + status);
+      that.debugger('END TUYA GET COLOR LIGHT POWER ' + this.debugPrefix);
+      that.powerState = status;
+      return callback(null, that.powerState);
+    }
+
+  }.bind(this));
 }
 
 TuyaColorLight.prototype._setOn = function(on, callback) {
@@ -359,6 +350,11 @@ TuyaColorLight.prototype._setOn = function(on, callback) {
     this.log.warn('Device is disabled... Bailing out...');
     return callback('Disabled', null);
   }
+
+  // if(this.noUpdate === true) {
+  //   this.log.warn('Skipping _setOn noUpdate...');
+  //   return callback(null, on);
+  // }
   // TODO: Skip if the light is already on...
   this.tuyaColorLight.set({'id': this.devId, set: on, 'dps' : 1}).then(() => {
     this.debugger('TUYA SET COLOR LIGHT POWER ' + this.debugPrefix);
@@ -391,30 +387,32 @@ TuyaColorLight.prototype._setHue = function(value, callback) {
   } else {
     this.colorMode = 'colour';
     this.debugger('SET Color Mode: \'colour\' -- dahhhhhh british spelling \'coulour\' really is annoying... why you gotta be special?');
-
   }
   this.color.H = value;
   this.setToCurrentColor();
-  callback(null, value);
+  callback();
 };
 
 // MARK: - BRIGHTNESS
 TuyaColorLight.prototype._getBrightness = function(callback) {
   var brightness = this.brightness;
+  this.debugger('GET Brightness: ' + brightness);
   callback(null, brightness);
 };
 
 TuyaColorLight.prototype._setBrightness = function(value, callback) {
   this.brightness = value;
+  this.color.L = Math.round(this.brightness / 2);
   var newValue = this._convertPercentageToVal(value);
-  this.debugger(this.debugPrefix + " BRIGHTNESS from UI: " + value + ' Converted from 100 to 255 scale: ' +  newValue);
+  this.debugger('SET BRIGHTNESS from UI: ' + value + ' of 255 scale: ' +  newValue);
   this.setToCurrentColor();
-  callback(null, value);
+  callback();
 };
 
 // MARK: - SATURATION
 TuyaColorLight.prototype._getSaturation = function(callback) {
   var color = this.color;
+  this.debugger('GET Saturation: ' + color.S);
   callback(null, color.S);
 };
 
@@ -422,28 +420,37 @@ TuyaColorLight.prototype._setSaturation = function(value, callback) {
   this.colorMode = 'colour';
   this.saturation = value;
   this.color.S = value;
-  this.debugger(this.debugPrefix + " SATURATION: " + value);
+  this.debugger('SET SATURATION: ' + value);
+  this.debugger('SET COLOR MODE: ' + this.colorMode);
   // this.setToCurrentColor();
-  callback(null, value);
+  callback();
 };
 
 // Mark: - TEMPERATURE
 TuyaColorLight.prototype._getColorTemperature = function(callback) {
   var colorTemperature = this.colorTemperature;
+  this.debugger('GET Color Temp: ' + colorTemperature);
   callback(null, colorTemperature);
 };
 
 TuyaColorLight.prototype._setColorTemperature = function(value, callback) {
   this.colorMode = 'white';
   this.colorTemperature = this._convertColorTemperature(value);
-  this.debugger(this.debugPrefix + " COLOR TEMPERATURE: " + value);
+  this.debugger('SET COLOR TEMPERATURE: ' + value);
   this.setToCurrentColor();
-  callback(null, value);
+  callback();
 };
 
 
 TuyaColorLight.prototype.getServices = function() {
 
+  this.log.info('Calling getServices()');
+
+  if(this.deviceEnabled === true) {
+    this.updateLight();
+    this.debugger(JSON.stringify(this, null, 10));
+
+  }
   // Setup the HAP services
   var informationService = new Service.AccessoryInformation();
 
