@@ -68,7 +68,7 @@ function TuyaColorLight(log, config) {
     this.tuyaDebug('Tuya API Settings - Retries: ' + this.apiRetries + ' Debug: ' + this.apiDebug + ' Min Timeout: ' + this.apiMinTimeout + ' Max Timeout: ' + this.apiMaxTimeout);
   }
 
-  this.devicePolling();
+  //this.devicePolling();
   setInterval(this.devicePolling.bind(this), this.refreshInterval * 1000);
 
 
@@ -348,7 +348,6 @@ TuyaColorLight.prototype.setOnStatus = function(on, callback) {
   this.tuyaDebug('Current Powerstate: ' + this.powerState + ' Changing to: ' + on);
 
   if(this.deviceEnabled === true) {
-
     var dpsTmp = {'1' : on}
     // TODO: Skip if the light is already on...
     this.tuyaColorLight.set(this, {'id': this.devId, 'dps' : dpsTmp}).then(result => {
@@ -504,7 +503,7 @@ TuyaColorLight.prototype._getAlphaHex = function(brightness) {
 
 TuyaColorLight.prototype.devicePolling = function() {
 
-  this.tuyaDebug('Polling at interval... ' + this.refreshInterval + ' seconds');
+  this.log('Polling at interval... ' + this.refreshInterval + ' seconds');
 
   this.getLightStatus(function(error, result) {
     if(error) {

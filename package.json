@@ -1,6 +1,6 @@
 {
   "name": "homebridge-tuya-colorlight",
-  "version": "1.0.5",
+  "version": "1.0.8",
   "description": "Tuya color LED light control for homebridge. Based on codetheweb's Tuya API and tuya outlet plugins. ",
   "main": "index.js",
   "scripts": {
@@ -11,7 +11,7 @@
     "url": "git+https://github.com/drumfreak/homebridge-tuya-colorlight.git"
   },
   "author": "Eric Rosebrock <webfreakeric@gmail.com> (https://github.com/drumfreak)",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/drumfreak/homebridge-tuya-colorlight/issues"
   },
