@@ -57,10 +57,10 @@ function TuyaColorLight(log, config) {
   // Setup Tuya Color Light
   if (config.ip != undefined && this.deviceEnabled === true) {
     this.tuyaDebug('Tuya Color Light ' + this.name + ' Ip is defined as ' + config.ip);
-    this.tuyaColorLight = new tuya(this, {type: 'color-lightbulb', ip: config.ip, id: config.devId, key: config.localKey, name: this.name, apiRetries: this.apiRetries, apiMinTimeout: this.apiMinTimeout, apiMaxTimeout: this.apiMaxTimeout, apiDebug: this.apiDebug, apiDebugPrefix: this.debugPrefix});
+    this.tuyaColorLight = new tuya({type: 'color-lightbulb', ip: config.ip, id: config.devId, key: config.localKey, name: this.name, apiRetries: this.apiRetries, apiMinTimeout: this.apiMinTimeout, apiMaxTimeout: this.apiMaxTimeout, apiDebug: this.apiDebug, apiDebugPrefix: this.debugPrefix});
   } else if(this.deviceEnabled === true) {
     this.tuyaDebug('Tuya Color Light ' + this.name + ' IP is undefined, resolving Ids and this usually does not work, so set a static IP for your powerstrip and add it to the config...');
-    this.tuyaColorLight = new tuya(this, {type: 'color-lightbulb', id: config.devId, key: config.localKey, name: this.name, apiRetries: this.apiRetries, apiMinTimeout: this.apiMinTimeout, apiMaxTimeout: this.apiMaxTimeout, apiDebug: this.apiDebug, apiDebugPrefix: this.debugPrefix});
+    this.tuyaColorLight = new tuya({type: 'color-lightbulb', id: config.devId, key: config.localKey, name: this.name, apiRetries: this.apiRetries, apiMinTimeout: this.apiMinTimeout, apiMaxTimeout: this.apiMaxTimeout, apiDebug: this.apiDebug, apiDebugPrefix: this.debugPrefix});
     this.tuyaColorLight.resolveIds(); // This method sucks... it hangs, it doesn't resolve properly. Fix it.
   }
 
