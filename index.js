@@ -1,6 +1,11 @@
 const tuya = require('homebridge-tuyapi-extended');
 const convert = require('color-convert');
 
+var Accessory,
+    Service,
+    Characteristic,
+    UUIDGen;
+
 module.exports = function(homebridge) {
   Service = homebridge.hap.Service;
   Characteristic = homebridge.hap.Characteristic;
